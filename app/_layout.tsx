@@ -1,24 +1,27 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { Slot } from "expo-router";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+const convex = new ConvexReactClient(
+  process.env.EXPO_PUBLIC_CONVEX_URL!
+);
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ClerkProvider
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+    >
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+          <StatusBar style="light" />
+          <Slot />
+        </SafeAreaView>
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   );
 }
+
