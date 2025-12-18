@@ -1,10 +1,43 @@
-import { View, Text } from "react-native";
-import { COLORS, Fonts } from "../../constants/theme";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
 
-export default function FeedScreen() {
+export default function HomeScreen() {
+  const { signOut } = useAuth();
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
-      <Text style={{ color: COLORS.white, fontFamily: Fonts.rounded }}>Feed Screen</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Feed</Text>
+
+      <TouchableOpacity
+        style={styles.signOutButton}
+        onPress={() => signOut()}
+      >
+        <Text style={styles.signOutText}>Sign out</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    color: "#fff",
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  signOutButton: {
+    backgroundColor: "#1DA1F2",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  signOutText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+});
