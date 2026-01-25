@@ -1,17 +1,23 @@
-import { ScrollView } from "react-native";
-import Post from "@/components/Post";
+import { FlatList } from "react-native";
+import StoriesSection from "../../components/StoriesSection";
+import Post from "../../components/Post";
 import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { PostType } from "@/types";
+import { api } from "../../convex/_generated/api";
 
-export default function HomeScreen() {
-  const postsData = useQuery(api.posts.getPosts) as PostType[] | undefined;
+export default function FeedScreen() {
+  const posts = useQuery(api.posts.getAll);
+
+  if (!posts) return null;
 
   return (
-    <ScrollView>
-      {postsData?.map((post) => (
-        <Post key={post._id} post={post} />
-      ))}
-    </ScrollView>
+    <FlatList
+      data={posts}
+      keyExtractor={(item) => item._id}
+      renderItem={({ item }) => (
+        <Post post={item} isLiked={item.isLiked} />
+      )}
+      ListHeaderComponent={<StoriesSection />}
+      contentContainerStyle={{ paddingBottom: 60 }}
+    />
   );
 }

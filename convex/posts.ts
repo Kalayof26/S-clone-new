@@ -1,34 +1,53 @@
-import { query } from './_generated/server';
-import { v } from 'convex/values';
+import { mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { getAuthenticatedUser } from "./users";
 
-export const getPosts = query(async ({ db, auth }) => {
-    const user = auth.getUserIdentity();
-    if (!user) return [];
+export const toggleLike = mutation({
+    args: {
+        postId: v.id("posts"),
+    },
+    handler: async (ctx, { postId }) => {
+        const user = await getAuthenticatedUser(ctx);
 
-    const posts = await db
-        .query('posts')
-        .order('desc')
-        .collect();
+        const existingLike = await ctx.db
+            .query("likes")
+            .withIndex("by_user_post", (q) =>
+                q.eq("userId", user._id).eq("postId", postId)
+            )
+            .unique();
 
-    return Promise.all(
-        posts.map(async (post) => {
-            const author = await db.get(post.userId);
-            const like = await db
-                .query('likes')
-                .withIndex('by_user_and_post', (q) => q.eq('userId', user.userId).eq('postId', post._id))
-                .first();
+        const post = await ctx.db.get(postId);
+        if (!post) throw new Error("Post not found");
 
-            const bookmark = await db
-                .query('bookmarks')
-                .withIndex('by_user_and_post', (q) => q.eq('userId', user.userId).eq('postId', post._id))
-                .first();
+        // ❌ UNLIKE
+        if (existingLike) {
+            await ctx.db.delete(existingLike._id);
+            await ctx.db.patch(postId, {
+                likesCount: post.likesCount - 1,
+            });
+            return false;
+        }
 
-            return {
-                ...post,
-                author,
-                isLiked: !!like,
-                isBookmarked: !!bookmark,
-            };
-        })
-    );
+        // ❤️ LIKE
+        await ctx.db.insert("likes", {
+            userId: user._id,
+            postId,
+        });
+
+        await ctx.db.patch(postId, {
+            likesCount: post.likesCount + 1,
+        });
+
+        if (post.userId !== user._id) {
+            await ctx.db.insert("notifications", {
+                userId: post.userId,
+                fromUserId: user._id,
+                postId,
+                type: "like",
+                createdAt: Date.now(),
+            });
+        }
+
+        return true;
+    },
 });

@@ -1,13 +1,21 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import ClerkAndConvexProvider from "@/providers/ClerkAndConvexProvider";
-import InitialLayout from "@/components/InitialLayout";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { Stack } from "expo-router";
+import { useEffect } from "react";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  return (
-    <ClerkAndConvexProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
-        <InitialLayout />
-      </SafeAreaView>
-    </ClerkAndConvexProvider>
-  );
+  const [loaded] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    JetBrainsMono: require("../assets/fonts/JetBrainsMono-Medium.ttf"),
+  });
+
+  useEffect(() => {
+    if (loaded) SplashScreen.hideAsync();
+  }, [loaded]);
+
+  if (!loaded) return null;
+
+  return <Stack />;
 }
